@@ -31,6 +31,7 @@ for d in data graphics sounds music dogfights missions; do
 done
 
 cp "$ANDROID/app/CMakeLists.txt" "$PROJECT/app/jni/CMakeLists.txt"
+cp "$ANDROID/app/android_main_bridge.c" "$PROJECT/app/jni/android_main_bridge.c"
 cp "$ANDROID/app/build.gradle" "$PROJECT/app/build.gradle"
 cp "$ANDROID/app/AndroidManifest.xml" "$PROJECT/app/src/main/AndroidManifest.xml"
 cp "$ANDROID/app/CdogsActivity.java" "$PROJECT/app/src/main/java/org/libsdl/app/CdogsActivity.java"
