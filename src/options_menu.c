@@ -147,13 +147,13 @@ static menu_t *MenuCreateOptionsGraphics(
 	return menu;
 }
 
+#if !defined(__ANDROID__) && !defined(__GCWZERO__)
 static void MenuCreateKeysSingleSection(
 	menu_t *menu, const char *sectionName, const int playerIndex);
 static menu_t *MenuCreateOptionChangeKey(
 	const char *name, const key_code_e code, const int playerIndex,
 	const bool isOptional);
 
-#if !defined(__ANDROID__) && !defined(__GCWZERO__)
 static menu_t *MenuCreateKeys(
 	const char *name, OptionsMenuData *data)
 {
@@ -167,7 +167,6 @@ static menu_t *MenuCreateKeys(
 	MenuSetPostInputFunc(menu, PostInputConfigApply, data);
 	return menu;
 }
-#endif
 
 static void MenuCreateKeysSingleSection(
 	menu_t *menu, const char *sectionName, const int playerIndex)
@@ -207,3 +206,4 @@ static menu_t *MenuCreateOptionChangeKey(
 	menu->u.changeKey.isOptional = isOptional;
 	return menu;
 }
+#endif
