@@ -18,6 +18,11 @@ cp -a "$SDL_DIR" "$PROJECT/app/jni/SDL"
 cp -a "$MIXER_DIR" "$PROJECT/app/jni/SDL_mixer"
 mkdir -p "$PROJECT/app/jni/cdogs"
 
+# SDL 2.32.10's Android project wrapper is older than the Android Gradle
+# Plugin used by this port. AGP requires Gradle 8.9 or newer.
+sed -i 's#gradle-[0-9][0-9.]*-bin.zip#gradle-8.9-bin.zip#' \
+  "$PROJECT/gradle/wrapper/gradle-wrapper.properties"
+
 # C-Dogs assets are copied into the APK assets directory. SDL extracts/opens
 # packaged assets through Android's asset manager at runtime.
 mkdir -p "$PROJECT/app/src/main/assets"
