@@ -74,8 +74,15 @@ set(CDOGS_SDL_EXTRA)
 if(WIN32)
 	set(CDOGS_SDL_EXTRA ../build/windows/cdogs.rc)
 endif()
-add_executable(cdogs-sdl
-	${CDOGS_SDL_SOURCES} ${CDOGS_SDL_HEADERS} ${CDOGS_SDL_EXTRA})
+if(ANDROID)
+	# Android's SDLActivity loads a shared libmain.so. Build the complete game
+	# as PIC-capable static code so that libmain.so can call the real main().
+	add_library(cdogs-sdl STATIC
+		${CDOGS_SDL_SOURCES} ${CDOGS_SDL_HEADERS} ${CDOGS_SDL_EXTRA})
+else()
+	add_executable(cdogs-sdl
+		${CDOGS_SDL_SOURCES} ${CDOGS_SDL_HEADERS} ${CDOGS_SDL_EXTRA})
+endif()
 if(APPLE)
 	set_target_properties(cdogs-sdl PROPERTIES
 		MACOSX_RPATH 1

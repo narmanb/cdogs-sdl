@@ -48,6 +48,55 @@ jobs:
           mkdir -p out
           cp android/project/app/build/outputs/apk/debug/app-debug.apk out/cdogs-rp5-debug.apk
 
+      - name: Validate Android startup payload
+        run: |
+          set -euo pipefail
+          APK=out/cdogs-rp5-debug.apk
+          unzip -l "$APK" | tee out/apk-contents.txt
+
+          for required in \
+            lib/arm64-v8a/libSDL2.so \
+            lib/arm64-v8a/libSDL2_mixer.so \
+            lib/arm64-v8a/libmain.so \
+            assets/graphics/font.png \
+            assets/data/ammo.json; do
+            grep -Fq "$required" out/apk-contents.txt || {
+              echo "Missing required APK payload: $required" >&2
+              exit 1
+            }
+          done
+
+          rm -rf out/apk-check
+          mkdir -p out/apk-check
+          unzip -q "$APK" 'lib/arm64-v8a/libmain.so' -d out/apk-check
+          MAIN_SO=out/apk-check/lib/arm64-v8a/libmain.so
+          READELF="$ANDROID_SDK_ROOT/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
+
+          "$READELF" -Ws "$MAIN_SO" | tee out/libmain-symbols.txt
+          grep -Eq '[[:space:]]SDL_main$' out/libmain-symbols.txt || {
+            echo 'libmain.so does not export SDL_main' >&2
+            exit 1
+          }
+          grep -Eq '[[:space:]]main$' out/libmain-symbols.txt || {
+            echo 'libmain.so does not contain the real C-Dogs main entry point' >&2
+            exit 1
+          }
+
+          "$READELF" -d "$MAIN_SO" | tee out/libmain-dynamic.txt
+          grep -Fq '[libSDL2.so]' out/libmain-dynamic.txt || {
+            echo 'libmain.so does not depend on SDL2' >&2
+            exit 1
+          }
+          grep -Fq '[libSDL2_mixer.so]' out/libmain-dynamic.txt || {
+            echo 'libmain.so does not depend on SDL2_mixer' >&2
+            exit 1
+          }
+
+          strings "$MAIN_SO" | grep -Fq 'launching real C-Dogs main' || {
+            echo 'libmain.so is missing the real-startup Android bridge' >&2
+            exit 1
+          }
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

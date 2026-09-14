@@ -1,15 +1,38 @@
+#define SDL_MAIN_HANDLED
 #include <SDL.h>
-#include <SDL_main.h>
+#include <SDL_system.h>
 
-/*
- * Temporary first-pass Android bridge.
- * The CI compiler pass will tell us the cleanest way to expose upstream
- * cdogs' main target as libmain.so without changing desktop builds.
- */
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+/* The Android-only cdogs-sdl static target contains upstream's real main(). */
+extern int main(int argc, char *argv[]);
+
 int SDL_main(int argc, char *argv[])
 {
-    (void)argc;
-    (void)argv;
-    SDL_Log("C-Dogs RP5 Android native bridge loaded");
-    return 0;
+    const char *internalPath = SDL_AndroidGetInternalStoragePath();
+    if (internalPath == NULL || internalPath[0] == '\0')
+    {
+        SDL_Log("C-Dogs RP5: SDL returned no internal storage path");
+        return EXIT_FAILURE;
+    }
+
+    if (chdir(internalPath) != 0)
+    {
+        SDL_Log(
+            "C-Dogs RP5: chdir(%s) failed: %s",
+            internalPath, strerror(errno));
+        return EXIT_FAILURE;
+    }
+
+    if (setenv("HOME", internalPath, 1) != 0)
+    {
+        SDL_Log("C-Dogs RP5: setting HOME failed: %s", strerror(errno));
+        return EXIT_FAILURE;
+    }
+
+    SDL_Log("C-Dogs RP5: launching real C-Dogs main from %s", internalPath);
+    return main(argc, argv);
 }
